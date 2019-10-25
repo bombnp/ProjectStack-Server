@@ -40,7 +40,7 @@ app.delete("/:email", (req, res) => {
     User.deleteOne(query, (err, result) => {
         if (err) return res.status(500).send(err.toString());
         if(result.deletedCount == 1)
-            res.sendStatus(200);
+            res.send("Deleted successfully")
         else
             res.send("Email not found");
     })
@@ -50,7 +50,7 @@ app.delete("/deleteall/:password", (req, res) => {
     if(req.params.password == "1a8d7c2b0B")
         User.deleteMany((err) => {
             if (err) return res.status(500).send(err.toString());
-            res.sendStatus(200);
+            res.send("Deleted all documents successfully")
         })
     else
         res.send("Wrong Password");
