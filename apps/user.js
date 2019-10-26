@@ -1,7 +1,4 @@
 const express = require("express");
-const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
-
 const User = require("../models/userModel.js");
 
 const app = express.Router();
@@ -13,17 +10,17 @@ app.post("/create", (req, res) => {
 })
 
 app.get("/info", (req, res) => {
-    User.find((err, data) => {
+    User.find((err, result) => {
         if(err) return res.status(500).send(err.toString());
-        res.json(data);
+        res.json(result);
     });
 })
 
 app.get("/:name", (req, res) => {
     query = { name: req.params.name};
-    User.find(query, (err, data) => {
+    User.find(query, (err, result) => {
         if(err) return res.status(500).send(err.toString());
-        res.json(data);
+        res.json(result);
     });
 })
 

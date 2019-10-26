@@ -1,4 +1,8 @@
-const app = require("express")();
-const bodyParser = require("body-parser");
-const mongoose = require("mongoose");
+const express = require("express");
+
+const app = express.Router();
+
+
+
+module.exports = app;
 

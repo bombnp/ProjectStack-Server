@@ -10,7 +10,7 @@ const userSchema = new Schema({
     gender: String,
     tel: String,
     url: String,
-    occupation: String,
+    job: String,
     workplace: String,
     birthdate: Date
 }, { timestamps: true, versionKey: false })
