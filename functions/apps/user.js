@@ -10,14 +10,8 @@ function throwError(err, res)
 var a = [];
 a.forEach
 app.post("/create", (req, res) => {
-    console.log(typeof req.body[0]);
-
-    req.body.forEach((doc) => {
-        var user = new User(doc);
-        user.save();
-    })
-    // var user = new User(req.body);
-    // user.save();
+    var user = new User(req.body);
+    user.save();
     res.sendStatus(201);
 })
 
