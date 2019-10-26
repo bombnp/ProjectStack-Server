@@ -3,15 +3,27 @@ const User = require("../models/userModel.js");
 
 const app = express.Router();
 
+function throwError(err, res)
+{
+    res.status(500).send(err.toString());
+}
+var a = [];
+a.forEach
 app.post("/create", (req, res) => {
-    var user = new User(req.body);
-    user.save();
+    console.log(typeof req.body[0]);
+
+    req.body.forEach((doc) => {
+        var user = new User(doc);
+        user.save();
+    })
+    // var user = new User(req.body);
+    // user.save();
     res.sendStatus(201);
 })
 
 app.get("/info", (req, res) => {
     User.find((err, result) => {
-        if(err) return res.status(500).send(err.toString());
+        if(err) return throwError(err, res);
         res.json(result);
     });
 })
@@ -19,7 +31,7 @@ app.get("/info", (req, res) => {
 app.get("/:name", (req, res) => {
     query = { name: req.params.name};
     User.find(query, (err, result) => {
-        if(err) return res.status(500).send(err.toString());
+        if(err) return throwError(err, res);
         res.json(result);
     });
 })
@@ -27,7 +39,7 @@ app.get("/:name", (req, res) => {
 app.post("/edit/:email", (req, res) => {
     query = { email : req.params.email };
     User.updateOne(query, { $set: req.body}, (err, result) => {
-        if (err) return res.status(500).send(err.toString());
+        if (err) return throwError(err, res);
         res.sendStatus(200);
     })
 })
@@ -35,7 +47,7 @@ app.post("/edit/:email", (req, res) => {
 app.delete("/:email", (req, res) => {
     query = { email : req.params.email };
     User.deleteOne(query, (err, result) => {
-        if (err) return res.status(500).send(err.toString());
+        if (err) return throwError(err, res);
         if(result.deletedCount == 1)
             res.send("Deleted successfully")
         else
@@ -46,7 +58,7 @@ app.delete("/:email", (req, res) => {
 app.delete("/deleteall/:password", (req, res) => {
     if(req.params.password == "1a8d7c2b0B")
         User.deleteMany((err) => {
-            if (err) return res.status(500).send(err.toString());
+            if (err) return throwError(err, res);
             res.send("Deleted all documents successfully")
         })
     else
