@@ -27,4 +27,7 @@ app.listen(PORT, () => {
     console.log("  Press CTRL-C to stop\n");
 })
 
-module.exports = app;
+/*
+login - req: username, password res: status(success, not found, invalid)
+register - req: schema process: (check for matching username, email, password-confirmpassword match) (password strength) res: one response for each statuses
+*/

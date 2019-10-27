@@ -6,6 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log*
 
+<<<<<<< HEAD
 # Firebase cache
 .firebase/
 
@@ -15,6 +16,10 @@ firebase-debug.log*
 # For a team working on the same Firebase project(s), it is recommended to leave
 # it commented so all members can deploy to the same project(s) in .firebaserc.
 # .firebaserc
+=======
+# Project related files
+Plan/
+>>>>>>> parent of b292eea... Added /register route
 
 # Runtime data
 pids
