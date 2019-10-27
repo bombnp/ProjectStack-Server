@@ -19,6 +19,7 @@ firebase-debug.log*
 =======
 # Project related files
 Plan/
+privatekey/
 
 # Runtime data
 pids
