@@ -20,6 +20,7 @@ firebase-debug.log*
 # Project related files
 Plan/
 privatekey/
+public/
 
 # Runtime data
 pids

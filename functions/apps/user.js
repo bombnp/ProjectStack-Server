@@ -1,57 +1,28 @@
 const express = require("express");
-const User = require("../models/userModel.js");
+const admin = require("firebase-admin");
+
+let db = admin.firestore();
 
 const app = express.Router();
 
 app.post("/create", (req, res) => {
-    var user = new User(req.body);
-    user.save();
-    res.sendStatus(201);
+    let payload = req.body;
+    let docRef = db.collection("users").doc(payload.email);
+    docRef.set(payload).then(() => {
+        res.status(201).send("User successfully created!");
+    }).catch((err) => {
+        res.status(400).send(err);
+    })
 })
 
 app.get("/info", (req, res) => {
-    console.log(req.body);
-    User.find((err, result) => {
-        if(err) return res.status(500).send(err.toString());
-        res.json(result);
-    });
-})
-
-app.get("/:name", (req, res) => {
-    query = { name: req.params.name};
-    User.find(query, (err, result) => {
-        if(err) return res.status(500).send(err.toString());
-        res.json(result);
-    });
-})
-
-app.post("/edit/:email", (req, res) => {
-    query = { email : req.params.email };
-    User.updateOne(query, { $set: req.body}, (err, result) => {
-        if (err) return res.status(500).send(err.toString());
-        res.sendStatus(200);
-    })
-})
-
-app.delete("/:email", (req, res) => {
-    query = { email : req.params.email };
-    User.deleteOne(query, (err, result) => {
-        if (err) return res.status(500).send(err.toString());
-        if(result.deletedCount == 1)
-            res.send("Deleted successfully")
-        else
-            res.send("Email not found");
-    })
-})
-
-app.delete("/deleteall/:password", (req, res) => {
-    if(req.params.password == "1a8d7c2b0B")
-        User.deleteMany((err) => {
-            if (err) return res.status(500).send(err.toString());
-            res.send("Deleted all documents successfully")
+    db.collection("users").get().then((snapshot) => {
+        snapshot.forEach((doc) => {
+            console.log(doc.id);
         })
-    else
-        res.send("Wrong Password");
+    }).catch((err) => {
+        res.send(err);
+    })
 })
 
 module.exports = app;
