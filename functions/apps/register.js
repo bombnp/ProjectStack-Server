@@ -54,9 +54,10 @@ app.post("/", async (req, res) => {
         errors.push(400);
 
     if(errors.length > 0)
-        res.json({ success: false, val: errors });
+        res.status(400).json({ success: false, val: errors });
     else
     {
+        console.log("HELLO");
         payload.encrypted = bcrypt.hashSync(payload.password, 10);
 
         delete payload.confirmpassword;
@@ -64,9 +65,9 @@ app.post("/", async (req, res) => {
 
         let docRef = db.collection("users").doc();
         await docRef.set(payload);
-
+        console.log(docRef.id);
         let token = helper.generateAuthToken({_id: docRef.id, username: payload.username});
-        res.status(400).header("token", token).json({ success: true, val: {
+        res.header("token", token).json({ success: true, val: {
             _id: docRef.id,
             username: payload.username
         }});
