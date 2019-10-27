@@ -66,7 +66,7 @@ app.post("/", async (req, res) => {
         await docRef.set(payload);
 
         let token = helper.generateAuthToken({_id: docRef.id, username: payload.username});
-        res.header("token", token).json({ success: true, val: {
+        res.status(400).header("token", token).json({ success: true, val: {
             _id: docRef.id,
             username: payload.username
         }});

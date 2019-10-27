@@ -2,8 +2,9 @@ const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
 const properties = require("./config/properties.js");
-const PORT = properties.PORT;
+const cors = require("cors");
 
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: true
