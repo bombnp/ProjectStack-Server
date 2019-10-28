@@ -8,11 +8,6 @@ let db = admin.firestore();
 
 const app = express.Router();
 
-function throwError(err, res)
-{
-    res.status(500).send(err.toString());
-}
-
 app.post("/register", async (req, res, next) => {
     let payload = req.body;
 
@@ -21,10 +16,6 @@ app.post("/register", async (req, res, next) => {
     payload.email = payload.email.toLowerCase();
 
     var errors = [];
-
-    var encryptPromise = bcrypt.hash(payload.password,10).then((encrypted) => {
-        payload.encrypted = encrypted;
-    });
     
     await Promise.all([
         db.collection("users").where("username","==",payload.username).get(),
@@ -55,10 +46,9 @@ app.post("/register", async (req, res, next) => {
         res.json({ success: false, val: errors });
     else
     {
-        await encryptPromise;
+        payload.password = bcrypt.hashSync(payload.password,10);
 
         delete payload.confirmpassword;
-        delete payload.password;
         
         await db.collection("users").doc(payload.email).set(payload).catch((err) => {
             next(err);
@@ -73,6 +63,53 @@ app.post("/register", async (req, res, next) => {
     }
 })
 
+app.post("/login", async (req, res, next) => {
+    let payload = req.body;
+
+    payload.loginname = payload.loginname.toLowerCase();
+
+    if(payload.loginname.includes("@")){ // login with email
+        console.log("EMAIL!");
+        db.collection("users").doc(payload.loginname).get()
+        .then((snapshot) => {
+            if(snapshot.exists)
+            {
+                if(bcrypt.compareSync(payload.password, snapshot.get("password")))
+                    res.json(100) // success
+                else
+                    res.json(200) // password mismatch
+            }
+            else
+                res.json(300) // loginname not found
+        })
+        .catch((err) => {
+            next(err);
+        })
+    }
+    else { // login with username
+        console.log("USERNAME!")
+        console.log(payload.loginname);
+        db.collection("users").where("username", "==", payload.loginname).get()
+        .then((snapshot) => {
+            if(!snapshot.empty)
+            {
+                snapshot.docs.forEach((docSnapshot) => {
+                    console.log(payload.password);
+                    console.log(docSnapshot.data());
+                    if(bcrypt.compareSync(payload.password, docSnapshot.get("password")))
+                        res.json(100)
+                    else
+                        res.json(200)
+                })
+            }
+            else
+                res.json(300)
+        })
+        .catch((err) => {
+            next(err);
+        })
+    }
+})
 module.exports = app;
 
 /*
@@ -82,4 +119,4 @@ module.exports = app;
     301 - password no upper
     302 - password no lower
     400 - password and confirm doesn't match
-*/
+*/ 
