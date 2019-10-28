@@ -24,23 +24,23 @@ app.post("/register", async (req, res, next) => {
     .then(([usernameSnapshot, emailSnapshot]) => {
         
         if(!usernameSnapshot.empty)
-            errors.push(100);
+            errors.push(401);
         if(emailSnapshot.exists)
-            errors.push(200);
+            errors.push(402);
     })
     .catch((err) => {
         next(err);
     })
 
     if(payload.password.length < 8)
-        errors.push(300);
+        errors.push(403);
     if(payload.password.toLowerCase() == payload.password)
-        errors.push(301);
+        errors.push(404);
     if(payload.password.toUpperCase() == payload.password)
-        errors.push(302);
+        errors.push(405);
 
     if(payload.password != payload.confirmpassword)
-        errors.push(400);
+        errors.push(406);
 
     if(errors.length > 0)
         res.json({ success: false, val: errors });
@@ -69,41 +69,44 @@ app.post("/login", async (req, res, next) => {
     payload.loginname = payload.loginname.toLowerCase();
 
     if(payload.loginname.includes("@")){ // login with email
-        console.log("EMAIL!");
+        
         db.collection("users").doc(payload.loginname).get()
         .then((snapshot) => {
             if(snapshot.exists)
             {
                 if(bcrypt.compareSync(payload.password, snapshot.get("password")))
-                    res.json(100) // success
+                {
+                    let token = helper.generateAuthToken({});
+                    res.header("token", token).json(200) // success
+                }
                 else
-                    res.json(200) // password mismatch
+                    res.json(401) // password mismatch
             }
             else
-                res.json(300) // loginname not found
+                res.json(402) // loginname not found
         })
         .catch((err) => {
             next(err);
         })
     }
     else { // login with username
-        console.log("USERNAME!")
-        console.log(payload.loginname);
+
         db.collection("users").where("username", "==", payload.loginname).get()
         .then((snapshot) => {
             if(!snapshot.empty)
             {
                 snapshot.docs.forEach((docSnapshot) => {
-                    console.log(payload.password);
-                    console.log(docSnapshot.data());
                     if(bcrypt.compareSync(payload.password, docSnapshot.get("password")))
-                        res.json(100)
+                    {
+                        let token = helper.generateAuthToken({});
+                        res.header("token", token).json(200) // success
+                    }
                     else
-                        res.json(200)
+                        res.json(401)
                 })
             }
             else
-                res.json(300)
+                res.json(402)
         })
         .catch((err) => {
             next(err);
@@ -111,12 +114,3 @@ app.post("/login", async (req, res, next) => {
     }
 })
 module.exports = app;
-
-/*
-    100 - username exists
-    200 - email exists
-    300 - password length < 8
-    301 - password no upper
-    302 - password no lower
-    400 - password and confirm doesn't match
-*/ 
