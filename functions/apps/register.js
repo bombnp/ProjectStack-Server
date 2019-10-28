@@ -2,7 +2,7 @@ const express = require("express");
 const admin = require("firebase-admin");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const helper = require("./helperfunctions.js");
+const helper = require("../utility/utilityfunctions.js");
 
 let db = admin.firestore();
 
@@ -13,34 +13,32 @@ function throwError(err, res)
     res.status(500).send(err.toString());
 }
 
-app.post("/", async (req, res) => {
+app.post("/register", async (req, res, next) => {
     let payload = req.body;
 
     // converts to lowercase
     payload.username = payload.username.toLowerCase();
     payload.email = payload.email.toLowerCase();
+
     var errors = [];
 
-    await db.collection("users").where("username","==",payload.username).get()
-    .then((snapshot) => {
-        if(!snapshot.empty) // found username match
-        {
+    var encryptPromise = bcrypt.hash(payload.password,10).then((encrypted) => {
+        payload.encrypted = encrypted;
+    });
+    
+    await Promise.all([
+        db.collection("users").where("username","==",payload.username).get(),
+        db.collection("users").doc(payload.email).get()
+    ])
+    .then(([usernameSnapshot, emailSnapshot]) => {
+        
+        if(!usernameSnapshot.empty)
             errors.push(100);
-        }
-    })
-    .catch((err) => {
-        console.log("Error fetching usernames: ",err);
-    })
-
-    await db.collection("users").where("email","==",payload.email).get()
-    .then((snapshot) => {
-        if(!snapshot.empty) // found email match
-        {
+        if(emailSnapshot.exists)
             errors.push(200);
-        }
     })
     .catch((err) => {
-        console.log("Error fetching emails: ",err);
+        next(err);
     })
 
     if(payload.password.length < 8)
@@ -54,21 +52,22 @@ app.post("/", async (req, res) => {
         errors.push(400);
 
     if(errors.length > 0)
-        res.status(400).json({ success: false, val: errors });
+        res.json({ success: false, val: errors });
     else
     {
-        console.log("HELLO");
-        payload.encrypted = bcrypt.hashSync(payload.password, 10);
+        await encryptPromise;
 
         delete payload.confirmpassword;
         delete payload.password;
+        
+        await db.collection("users").doc(payload.email).set(payload).catch((err) => {
+            next(err);
+        });
+        
+        let token = helper.generateAuthToken({_id: payload.email, username: payload.username});
 
-        let docRef = db.collection("users").doc();
-        await docRef.set(payload);
-        console.log(docRef.id);
-        let token = helper.generateAuthToken({_id: docRef.id, username: payload.username});
         res.header("token", token).json({ success: true, val: {
-            _id: docRef.id,
+            _id: payload.email,
             username: payload.username
         }});
     }

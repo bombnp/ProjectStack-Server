@@ -10,15 +10,13 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-properties.app_names.forEach((val, index, array) => {
-    app.use("/"+val,require("./apps/"+val));
-    console.log("Routed to /"+val);
-})
+app.use("/",require("./router.js"));
 console.log("Routed successfully!");
 
-module.exports = app;
+// error handler
+app.use((err, req, res, next) => {
+    console.error("ERROR: ", err);
+    res.status(500).send("ERROR: ", err);
+})
 
-/*
-login - req: username, password res: status(success, not found, invalid)
-register - req: schema process: (check for matching username, email, password-confirmpassword match) (password strength) res: one response for each statuses
-*/
+module.exports = app;

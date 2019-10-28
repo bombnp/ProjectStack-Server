@@ -5,23 +5,23 @@ let db = admin.firestore();
 
 const app = express.Router();
 
-app.post("/create", (req, res) => {
+app.post("/user/create", (req, res, next) => {
     let payload = req.body;
-    let docRef = db.collection("users").doc(payload.email);
+    db.collection("users").doc(payload.email);
     docRef.set(payload).then(() => {
         res.status(201).send("User successfully created!");
     }).catch((err) => {
-        res.status(400).send(err);
+        next(err);
     })
 })
 
-app.get("/info", (req, res) => {
+app.get("/user/info", (req, res, next) => {
     db.collection("users").get().then((snapshot) => {
         snapshot.forEach((doc) => {
             console.log(doc.id);
         })
     }).catch((err) => {
-        res.send(err);
+        next(err);
     })
 })
 
