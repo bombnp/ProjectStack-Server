@@ -31,5 +31,5 @@ app.use((err, req, res, next) => {
 })
 
 app.listen(PORT, () => {
-    console.log("Server successfully initialized");
+    console.log("Listening on: http://localhost:"+PORT);
 })

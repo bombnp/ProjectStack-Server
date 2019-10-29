@@ -1,7 +1,7 @@
 const express = require("express");
 const admin = require("firebase-admin");
 const bcrypt = require("bcrypt");
-const helper = require("../utility/utilityfunctions.js");
+const helper = require("./utilityfunctions.js");
 
 let db = admin.firestore();
 
@@ -62,12 +62,6 @@ app.post("/register", async (req, res, next) => {
         }).catch((err) => {
             next(err);
         });
-        let token = helper.generateAuthToken({_id: payload.email, username: payload.username});
-
-        res.header("token", token).json({ success: true, val: {
-            _id: payload.email,
-            username: payload.username
-        }});
     }
 })
 
@@ -79,12 +73,14 @@ app.post("/login", (req, res, next) => {
     if(payload.loginname.includes("@")){ // login with email
         
         db.collection("users").doc(payload.loginname).get()
-        .then((snapshot) => {
-            if(snapshot.exists)
+        .then((docSnapshot) => {
+            if(docSnapshot.exists)
             {
-                if(bcrypt.compareSync(payload.password, snapshot.get("password")))
+                if(bcrypt.compareSync(payload.password, docSnapshot.get("password")))
                 {
-                    let token = helper.generateAuthToken({});
+                    let token = helper.generateAuthToken({
+                        _id: payload.loginname
+                    });
                     res.header("token", token).json(200) // success
                 }
                 else
@@ -100,13 +96,15 @@ app.post("/login", (req, res, next) => {
     else { // login with username
 
         db.collection("users").where("username", "==", payload.loginname).get()
-        .then((snapshot) => {
-            if(!snapshot.empty)
+        .then((querySnapshot) => {
+            if(!querySnapshot.empty)
             {
-                snapshot.docs.forEach((docSnapshot) => {
+                querySnapshot.docs.forEach((docSnapshot) => {
                     if(bcrypt.compareSync(payload.password, docSnapshot.get("password")))
                     {
-                        let token = helper.generateAuthToken({});
+                        let token = helper.generateAuthToken({
+                            _id: docSnapshot.id
+                        });
                         res.header("token", token).json(200) // success
                     }
                     else
