@@ -1,5 +1,4 @@
 const express = require("express");
-const Project = require("../models/projectModel.js");
 
 const app = express.Router();
 

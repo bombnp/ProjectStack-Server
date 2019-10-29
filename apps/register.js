@@ -1,6 +1,5 @@
 const express = require("express");
 const admin = require("firebase-admin");
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const helper = require("../utility/utilityfunctions.js");
 
@@ -11,12 +10,13 @@ const app = express.Router();
 app.post("/register", async (req, res, next) => {
     let payload = req.body;
 
+    console.log(payload);
+
     // converts to lowercase
     payload.username = payload.username.toLowerCase();
     payload.email = payload.email.toLowerCase();
 
     var errors = [];
-    
     await Promise.all([
         db.collection("users").where("username","==",payload.username).get(),
         db.collection("users").doc(payload.email).get()
@@ -50,10 +50,18 @@ app.post("/register", async (req, res, next) => {
 
         delete payload.confirmpassword;
         
-        await db.collection("users").doc(payload.email).set(payload).catch((err) => {
+        db.collection("users").doc(payload.email).set(payload).then((result) => {
+
+            let token = helper.generateAuthToken({_id: payload.email, username: payload.username});
+
+            res.header("token", token).json({ success: true, val: {
+                _id: payload.email,
+                username: payload.username
+            }});
+            
+        }).catch((err) => {
             next(err);
         });
-        
         let token = helper.generateAuthToken({_id: payload.email, username: payload.username});
 
         res.header("token", token).json({ success: true, val: {
@@ -63,7 +71,7 @@ app.post("/register", async (req, res, next) => {
     }
 })
 
-app.post("/login", async (req, res, next) => {
+app.post("/login", (req, res, next) => {
     let payload = req.body;
 
     payload.loginname = payload.loginname.toLowerCase();
