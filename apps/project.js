@@ -14,7 +14,7 @@ app.post("/project/update", helper.checkAuthen, (req, res, next) => {
     let data = payload.data;
     delete data.docId;
 
-    db.collection("projects").doc(docId).set(data)
+    db.collection("projects").doc(docId).update(data)
     .then(() => {
         res.json({ success: true, projectId: docId });
     })

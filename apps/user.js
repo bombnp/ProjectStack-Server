@@ -16,11 +16,9 @@ app.post("/user/create", (req, res, next) => {
     res.render()
 })
 
-app.get("/user/info", (req, res, next) => {
-    db.collection("users").get().then((snapshot) => {
-        snapshot.forEach((doc) => {
-            console.log(doc.id);
-        })
+app.post("/user/all", (req, res, next) => {
+    db.collection("users").select("username", "email").get().then((snapshot) => {
+        res.json(snapshot.docs.map((docRef) => docRef.data()));
     }).catch((err) => {
         next(err);
     })

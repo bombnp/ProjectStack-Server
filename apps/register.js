@@ -10,8 +10,6 @@ const app = express.Router();
 app.post("/register", async (req, res, next) => {
     let payload = req.body;
 
-    console.log(payload);
-
     // converts to lowercase
     payload.username = payload.username.toLowerCase();
     payload.email = payload.email.toLowerCase();
@@ -46,18 +44,30 @@ app.post("/register", async (req, res, next) => {
         res.json({ success: false, val: errors });
     else
     {
-        payload.password = bcrypt.hashSync(payload.password,10);
-
-        delete payload.confirmpassword;
+        let data = {
+            username: payload.username,
+            password : bcrypt.hashSync(payload.password,10),
+            email: payload.email,
+            title: payload.title,
+            firstName: payload.firstName,
+            lastName: payload.lastName,
+            tel: payload.tel,
+            job: payload.job,
+            workplace: payload.workplace,
+            teams: []
+        };
         
-        db.collection("users").doc(payload.email).set(payload).then((result) => {
+        db.collection("users").add(data).then((docRef) => {
 
-            let token = helper.generateAuthToken({_id: payload.email, username: payload.username});
+            let token = helper.generateAuthToken({_id: docRef.id, username: data.username});
 
-            res.header("token", token).json({ success: true, val: {
-                _id: payload.email,
-                username: payload.username
-            }});
+            res.json({
+                success: true,
+                val: {
+                    _id: docRef.id,
+                    username: data.username
+                }
+            });
             
         }).catch((err) => {
             next(err);
@@ -81,13 +91,26 @@ app.post("/login", (req, res, next) => {
                     let token = helper.generateAuthToken({
                         _id: payload.loginname
                     });
-                    res.header("token", token).json(200) // success
+                    res.json({
+                        success: true,
+                        val: {
+                            token: token,
+                            _id: docSnapshot.id,
+                            username: docSnapshot.get("username")
+                        }
+                    }) // success
                 }
                 else
-                    res.json(401) // password mismatch
+                    res.json({
+                        success: false,
+                        val: [401]
+                    }) // password mismatch
             }
             else
-                res.json(402) // loginname not found
+                res.json({
+                    success: false,
+                    val: [402]
+                }) // loginname not found
         })
         .catch((err) => {
             next(err);
@@ -105,14 +128,22 @@ app.post("/login", (req, res, next) => {
                         let token = helper.generateAuthToken({
                             _id: docSnapshot.id
                         });
-                        res.header("token", token).json(200) // success
+                        res.json({
+                            success: true, val: {
+                                token: token,
+                                _id: docSnapshot.id,
+                                username: docSnapshot.get("username")
+                        }}) // success
                     }
                     else
-                        res.json(401)
+                        res.json({ success: false, val: [401] })
                 })
             }
             else
-                res.json(402)
+                res.json({
+                    success: false,
+                    val: [402]
+                })
         })
         .catch((err) => {
             next(err);
