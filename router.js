@@ -1,6 +1,11 @@
 const app_names = require("./config/properties.js").app_names;
-let routers = []
-app_names.forEach((app_name) => {
-    routers.push(require("./apps/"+app_name));
-})
-module.exports = routers
+
+module.exports = (app) => {    
+    app_names.forEach((app_name) => {
+        app.use("/",require("./apps/"+app_name));
+    })
+    
+    app.get("/", (req, res) => {
+        res.render("index.html");
+    })
+}

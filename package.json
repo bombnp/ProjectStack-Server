@@ -7,13 +7,14 @@
     "now-start": "node server.js"
   },
   "engines": {
-      "node": "^10.10.0"
+    "node": "^10.10.0"
   },
   "dependencies": {
     "bcrypt": "^3.0.6",
     "body-parser": "^1.19.0",
     "cors": "^2.8.5",
     "express": "^4.17.1",
+    "express-es6-template-engine": "^2.2.0",
     "firebase-admin": "^8.6.1",
     "firebase-functions": "^3.3.0",
     "jsonwebtoken": "^8.5.1",

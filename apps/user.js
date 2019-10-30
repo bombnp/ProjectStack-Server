@@ -13,6 +13,7 @@ app.post("/user/create", (req, res, next) => {
     }).catch((err) => {
         next(err);
     })
+    res.render()
 })
 
 app.get("/user/info", (req, res, next) => {
