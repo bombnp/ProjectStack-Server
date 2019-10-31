@@ -8,7 +8,7 @@ function generateAuthToken(payload){
 // eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiJib21iLm5wQGdtYWlsLmNvbSIsImlhdCI6MTU3MjMzMTk4MX0.c3FQkb8E8G7YGBGdozQ4KGnMWW2L0js7GNpZhChH0go
 
 function checkAuthen(req, res, next){
-    const token = req.headers["token"];
+    const token = req.cookies.token;
     if(!token)
         return res.status(401).send("Access Denied. No token provided");
     try {

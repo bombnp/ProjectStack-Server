@@ -3,14 +3,17 @@ const app = express();
 const bodyParser = require("body-parser");
 const properties = require("./config/properties.js");
 const cors = require("cors");
-const PORT = properties.PORT;
 const admin = require("firebase-admin")
+const dotenv = require("dotenv");
 const mustacheExpress = require("mustache-express");
+const serviceAccount = require("./privatekey/serviceAccountKey.json");
+const cookieParser = require("cookie-parser")
 
-const serviceAccountKey = require("./privatekey/serviceAccountKey.json");
+dotenv.config();
+
 const path = require("path");
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccountKey)
+    credential: admin.credential.cert(serviceAccount)
 });
 
 app.use(cors());
@@ -18,6 +21,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+app.use(cookieParser());
 
 app.use(express.static("web"));
     
@@ -34,6 +38,6 @@ app.use((err, req, res, next) => {
     res.status(500).send("ERROR THROWBACK   : "+ err);
 })
 
-app.listen(PORT, () => {
-    console.log("Listening on: http://localhost:"+PORT);
+app.listen(properties.PORT, () => {
+    console.log("Listening on: http://localhost:"+properties.PORT);
 })

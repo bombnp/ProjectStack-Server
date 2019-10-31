@@ -48,26 +48,22 @@ app.post("/register", async (req, res, next) => {
             username: payload.username,
             password : bcrypt.hashSync(payload.password,10),
             email: payload.email,
-            title: payload.title,
-            firstName: payload.firstName,
-            lastName: payload.lastName,
-            tel: payload.tel,
-            job: payload.job,
-            workplace: payload.workplace,
+            title: payload.title ? payload.title : "",
+            firstName: payload.firstName ? payload.firstName : "",
+            lastName: payload.lastName ? payload.lastName : "",
+            tel: payload.tel ? payload.tel : "",
+            job: payload.job ? payload.job : "",
+            workplace: payload.workplace ? payload.workplace : "",
             teams: []
         };
+
+        console.log(data);
         
         db.collection("users").add(data).then((docRef) => {
 
             let token = helper.generateAuthToken({_id: docRef.id, username: data.username});
 
-            res.json({
-                success: true,
-                val: {
-                    _id: docRef.id,
-                    username: data.username
-                }
-            });
+            res.json({ success: true });
             
         }).catch((err) => {
             next(err);

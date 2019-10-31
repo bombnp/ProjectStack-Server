@@ -15,7 +15,7 @@ app.post("/team/create", (req, res, next) => {
     }
     db.collection("teams").add(data)
     .then((docRef) => {
-        res.json({ success: true, teamID: docRef.id });
+        res.json({ teamID: docRef.id });
     })
     .catch((err) => {
         next(err);
