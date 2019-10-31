@@ -7,11 +7,12 @@ let db = admin.firestore();
 
 const app = express.Router();
 
-function authenticate(docRef, res){
-    let token = helper.generateAuthToken({ _id: docRef.id, username: docRef.get("username") });
+async function authenticate(docRef, res){
+    let token = helper.generateAuthToken({ userID: docRef.id, username: docRef.get("username") });
+
     res
     .cookie("token", token)
-    .cookie("_id", docRef.id)
+    .cookie("userID", docRef.id)
     .cookie("username", docRef.get("username"))
     .json({ success: true });
 }
@@ -19,7 +20,7 @@ function authenticate(docRef, res){
 function unauthenticate(res){
     res
     .clearCookie("token")
-    .clearCookie("_id")
+    .clearCookie("userID")
     .clearCookie("username")
     .json({ success: true });
 }
@@ -28,6 +29,8 @@ app.post("/register", async (req, res, next) => {
     let payload = req.body;
 
     // converts to lowercase
+    if(!payload.username || !payload.password || !payload.email || !payload.confirmpassword)
+        next(new Error("Not enough registration information"));
     payload.username = payload.username.toLowerCase();
     payload.email = payload.email.toLowerCase();
 
@@ -61,6 +64,7 @@ app.post("/register", async (req, res, next) => {
         res.json({ success: false, val: errors });
     else
     {
+        let currentDate = new Date();
         let data = {
             username: payload.username,
             password : bcrypt.hashSync(payload.password,10),
@@ -71,10 +75,10 @@ app.post("/register", async (req, res, next) => {
             tel: payload.tel ? payload.tel : "",
             job: payload.job ? payload.job : "",
             workplace: payload.workplace ? payload.workplace : "",
-            teams: []
+            teams: [],
+            createdAt: currentDate,
+            modifiedAt: currentDate
         };
-
-        console.log(data);
         
         db.collection("users").add(data).then((docRef) => {
             authenticate(docRef, res);

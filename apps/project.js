@@ -26,12 +26,17 @@ app.post("/project/update", helper.checkAuthen, (req, res, next) => {
 app.post("/project/create", helper.checkAuthen, (req, res, next) => {
     let payload = req.body;
 
+    let currentDate = new Date();
+
     let data = {
-        name: payload.name,
-        owner_id: payload.owner_id,
+        projectName: payload.projectName,
+        ownerID: payload.ownerID,
         content: payload.content,
-        members: [payload.owner_id],
-        requests: []
+        order: payload.order,
+        members: [payload.ownerID],
+        requests: [],
+        createdAt: currentDate,
+        modifiedAt: currentDate
     }
     
     db.collection("projects").add(data)
@@ -43,49 +48,38 @@ app.post("/project/create", helper.checkAuthen, (req, res, next) => {
     })
 })
 
-function passVar(projectCards, projectRef, first_paragraph){
-    return (userRef) => {
-        let data = {
-            name: projectRef.get("name"),
-            owner_username: userRef.get("username"),
-            content: first_paragraph.substring(0,Math.min(first_paragraph.length,200)),
-            img: "https://denvercps.com/wp-content/uploads/2018/12/placeholder-square.png"
-        }
-        console.log("HEY2")
-        projectCards.push(data);
-        // console.log(projectCards);
-    }
-}
-
 app.post("/project/all", async (req, res, next) => {
     let payload = req.body;
     let projectCards = [];
-    let snapshots = []
-    await db.collection("projects").limit(payload.batch).get()
-    .then((snapshot) => {
-        snapshots = snapshot.docs;
+    // await db.collection("projects").limit(payload.batch).get()
+    db.collection("projects").orderBy("modifiedAt", "desc").get()
+    .then(async (snapshot) => {
+        for(var i=0; i<Math.min(snapshot.docs.length,payload.batch); i++) {
+            let projectRef = snapshot.docs[i];
+            await db.collection("users").doc(projectRef.get("ownerID")).get()
+            // .then(passVar(projectCards, projectRef, first_paragraph))
+            .then((userRef) => {
+                // console.log(projectRef.get("content").paragraphs);
+                first_paragraph = (projectRef.get("content").paragraphs) ? projectRef.get("content").paragraphs[0] : "";
+                let data = {
+                    projectID: projectRef.id,
+                    projectName: projectRef.get("projectName"),
+                    ownerUsername: userRef.get("username"),
+                    ownerID: userRef.id,
+                    content: first_paragraph.substring(0,Math.min(first_paragraph.length,200)),
+                    img_url: "https://denvercps.com/wp-content/uploads/2018/12/placeholder-square.png"
+                }
+                projectCards.push(data);
+                if(projectCards.length == Math.min(snapshot.docs.length,payload.batch))
+                    res.json(projectCards);
+            })
+            .catch((err) => {
+                next(err);
+            })
+        }
     })
     .catch((err) => {
         next(err);
-    })
-    snapshots.forEach((projectRef) => {
-        first_paragraph = projectRef.get("content").paragraphs[0];
-        db.collection("users").doc(projectRef.get("owner_id")).get()
-        // .then(passVar(projectCards, projectRef, first_paragraph))
-        .then((userRef) => {
-            let data = {
-                name: projectRef.get("name"),
-                owner_username: userRef.get("username"),
-                content: first_paragraph.substring(0,Math.min(first_paragraph.length,200)),
-                img: "https://denvercps.com/wp-content/uploads/2018/12/placeholder-square.png"
-            }
-            projectCards.push(data);
-            if(projectCards.length == snapshots.length)
-                res.json(projectCards);
-        })
-        .catch((err) => {
-            next(err);
-        })
     })
 })
 
