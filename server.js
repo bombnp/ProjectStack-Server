@@ -8,6 +8,7 @@ const dotenv = require("dotenv");
 const mustacheExpress = require("mustache-express");
 const cookieParser = require("cookie-parser")
 const path = require("path");
+const helper = require("./apps/utilityfunctions.js");
 
 dotenv.config();
 
@@ -29,13 +30,15 @@ app.engine("html",mustacheExpress());
 app.set("views",path.join(__dirname, 'web'));
 app.set("view engine", "html");
 
+// app.use(helper.refreshToken);
+
 require("./router.js")(app);
 console.log("Routed successfully!");
 
 // error handler
 app.use((err, req, res, next) => {
     console.error("ERROR: ", err);
-    res.status(500).send("ERROR THROWBACK   : "+ err);
+    res.status(510).send("ERROR THROWBACK   : "+ err);
 })
 
 app.listen(properties.PORT, () => {

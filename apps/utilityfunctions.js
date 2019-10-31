@@ -2,25 +2,50 @@ const jwt = require("jsonwebtoken");
 const private_key = require("../config/properties.js").private_key;
 
 function generateAuthToken(payload){
-    return jwt.sign(payload, private_key);
+    return jwt.sign(payload, private_key, { expiresIn: "1w" });
 }
-
-// eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiJib21iLm5wQGdtYWlsLmNvbSIsImlhdCI6MTU3MjMzMTk4MX0.c3FQkb8E8G7YGBGdozQ4KGnMWW2L0js7GNpZhChH0go
 
 function checkAuthen(req, res, next){
     const token = req.cookies.token;
     if(!token)
-        return res.status(401).send("Access Denied. No token provided");
+        return res.redirect("https://projectstack.now.sh/login");
     try {
         req.user = jwt.verify(token, private_key);
         next();
+    } catch (err) {
+        res.redirect("https://projectstack.now.sh/login");
     }
-    catch (err) {
-        res.status(402).send("Access Denied. Invalid token");
+}
+
+function refreshToken(req, res, next){
+    let token = req.cookies.token;
+    if(!token){
+        res
+        .clearCookie("token")
+        .clearCookie("username")
+        .clearCookie("profilepic_url");
+        next();
     }
+    try {
+        let payload = jwt.verify(token, private_key);
+        token = generateAuthToken({ username: payload.username, profilepic_url: payload.profilepic_url});
+        res
+        .cookie("token", token)
+        .cookie("username", payload.username)
+        .cookie("profilepic_url", payload.profilepic_url);
+        next();
+    } catch (err) {
+        res
+        .clearCookie("token")
+        .clearCookie("username")
+        .clearCookie("profilepic_url");
+        next();
+    }
+
 }
 
 module.exports = {
     generateAuthToken,
-    checkAuthen
+    checkAuthen,
+    refreshToken
 }

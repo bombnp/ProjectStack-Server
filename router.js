@@ -26,6 +26,14 @@ module.exports = (app) => {
         });
     })
 
+    app.get("/profile/:username", (req, res) => {
+        
+    })
+
+    // app.get("/project/:projectID", (req, res) => {
+        
+    // })
+
     app.get("/test", (req, res) => {
         res.render('page/testvariable', {
             name: 'saenyakorn'

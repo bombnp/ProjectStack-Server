@@ -25,14 +25,36 @@ app.post("/user/edit", helper.checkAuthen, (req, res, next) => {
 })
 
 app.post("/user/all", (req, res, next) => {
-    db.collection("users").select("username", "email").get().then((snapshot) => {
+    let payload = req.body;
+    db.collection("users").select(...payload.fields).get().then((snapshot) => {
         res.json(snapshot.docs.map((docRef) => {
             let data = docRef.data();
-            data.userID = docRef.id;
             return data;
         }));
     }).catch((err) => {
         next(err);
+    })
+})
+
+app.post("/user/info", (req, res, next) => {
+    let payload = req.body;
+    db.collection("users").doc(payload.username).get()
+    .then((snapshot) => {
+        if(!snapshot.exists)
+            next(new Error("Username not found."));
+        else {
+            if("fields" in payload){
+                let data = {};
+                payload.fields.forEach((field, index, arr) => {
+                    data[field] = snapshot.get(field);
+                    if(index == arr.length-1)
+                        res.json(data);
+                })
+            }
+            else {
+                res.json(snapshot.data());
+            }
+        }
     })
 })
 

@@ -2,26 +2,27 @@ const express = require("express");
 const admin = require("firebase-admin");
 const bcrypt = require("bcrypt");
 const helper = require("./utilityfunctions.js");
+const defaultPicURL = require("../config/properties.js").defaultProfilePic;
 
 let db = admin.firestore();
 
 const app = express.Router();
 
-async function authenticate(docRef, res){
-    let token = helper.generateAuthToken({ userID: docRef.id, username: docRef.get("username") });
+function authenticate(docRef, res){
+    let token = helper.generateAuthToken({ username: docRef.id, profilepic_url: docRef.get("profilepic_url")});
 
     res
     .cookie("token", token)
-    .cookie("userID", docRef.id)
-    .cookie("username", docRef.get("username"))
+    .cookie("username", docRef.id)
+    .cookie("profilepic_url", docRef.get("profilepic_url"))
     .json({ success: true });
 }
 
 function unauthenticate(res){
     res
     .clearCookie("token")
-    .clearCookie("userID")
     .clearCookie("username")
+    .clearCookie("profilepic_url")
     .json({ success: true });
 }
 
@@ -37,13 +38,12 @@ app.post("/register", async (req, res, next) => {
     var errors = [];
     await Promise.all([
         db.collection("users").where("username","==",payload.username).get(),
-        db.collection("users").doc(payload.email).get()
+        db.collection("users").where("email","==",payload.email).get()
     ])
     .then(([usernameSnapshot, emailSnapshot]) => {
-        
         if(!usernameSnapshot.empty)
             errors.push(401);
-        if(emailSnapshot.exists)
+        if(!emailSnapshot.empty)
             errors.push(402);
     })
     .catch((err) => {
@@ -75,16 +75,26 @@ app.post("/register", async (req, res, next) => {
             tel: payload.tel ? payload.tel : "",
             job: payload.job ? payload.job : "",
             workplace: payload.workplace ? payload.workplace : "",
+            projects: [],
             teams: [],
+            profilepic_url: defaultPicURL,
             createdAt: currentDate,
             modifiedAt: currentDate
         };
         
-        db.collection("users").add(data).then((docRef) => {
-            authenticate(docRef, res);
-        }).catch((err) => {
+        await db.collection("users").doc(data.username).set(data)
+        .then(() => {})
+        .catch((err) => {
             next(err);
         });
+
+        db.collection("users").doc(data.username).get()
+        .then((docRef) => {
+            authenticate(docRef, res);
+        })
+        .catch((err) => {
+            next(err);
+        })
     }
 })
 
@@ -93,7 +103,7 @@ app.post("/login", (req, res, next) => {
 
     payload.loginname = payload.loginname.toLowerCase();
 
-    if(payload.loginname.includes("@")){ // login with email
+    if(!payload.loginname.includes("@")){ // login with username
         
         db.collection("users").doc(payload.loginname).get()
         .then((docRef) => {
@@ -111,9 +121,9 @@ app.post("/login", (req, res, next) => {
             next(err);
         })
     }
-    else { // login with username
+    else { // login with email
 
-        db.collection("users").where("username", "==", payload.loginname).get()
+        db.collection("users").where("email", "==", payload.loginname).get()
         .then((querySnapshot) => {
             if(!querySnapshot.empty)
             {
@@ -140,4 +150,5 @@ app.post("/logout", (req, res) => {
 app.post("/checkauthen", helper.checkAuthen, (req, res) => {
     res.json(req.user);
 })
+
 module.exports = app;
