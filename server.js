@@ -6,12 +6,12 @@ const cors = require("cors");
 const admin = require("firebase-admin")
 const dotenv = require("dotenv");
 const mustacheExpress = require("mustache-express");
-const serviceAccount = require("./privatekey/serviceAccountKey.json");
 const cookieParser = require("cookie-parser")
+const path = require("path");
 
 dotenv.config();
 
-const path = require("path");
+const serviceAccount = require("./privatekey/serviceAccountKey.json");
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount)
 });

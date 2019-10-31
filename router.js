@@ -20,6 +20,12 @@ module.exports = (app) => {
         });
     })
 
+    app.get("/signup", (req, res) => {
+        res.sendFile("register.html", {
+            root: path.join(__dirname,"/web/page")
+        });
+    })
+
     app.get("/test", (req, res) => {
         res.render('page/testvariable', {
             name: 'saenyakorn'

@@ -7,6 +7,23 @@ let db = admin.firestore();
 
 const app = express.Router();
 
+function authenticate(docRef, res){
+    let token = helper.generateAuthToken({ _id: docRef.id, username: docRef.get("username") });
+    res
+    .cookie("token", token)
+    .cookie("_id", docRef.id)
+    .cookie("username", docRef.get("username"))
+    .json({ success: true });
+}
+
+function unauthenticate(res){
+    res
+    .clearCookie("token")
+    .clearCookie("_id")
+    .clearCookie("username")
+    .json({ success: true });
+}
+
 app.post("/register", async (req, res, next) => {
     let payload = req.body;
 
@@ -60,11 +77,7 @@ app.post("/register", async (req, res, next) => {
         console.log(data);
         
         db.collection("users").add(data).then((docRef) => {
-
-            let token = helper.generateAuthToken({_id: docRef.id, username: data.username});
-
-            res.json({ success: true });
-            
+            authenticate(docRef, res);
         }).catch((err) => {
             next(err);
         });
@@ -79,34 +92,16 @@ app.post("/login", (req, res, next) => {
     if(payload.loginname.includes("@")){ // login with email
         
         db.collection("users").doc(payload.loginname).get()
-        .then((docSnapshot) => {
-            if(docSnapshot.exists)
+        .then((docRef) => {
+            if(docRef.exists)
             {
-                if(bcrypt.compareSync(payload.password, docSnapshot.get("password")))
-                {
-                    let token = helper.generateAuthToken({
-                        _id: payload.loginname
-                    });
-                    res.json({
-                        success: true,
-                        val: {
-                            token: token,
-                            _id: docSnapshot.id,
-                            username: docSnapshot.get("username")
-                        }
-                    }) // success
-                }
+                if(bcrypt.compareSync(payload.password, docRef.get("password")))
+                    authenticate(docRef, res); // success
                 else
-                    res.json({
-                        success: false,
-                        val: [401]
-                    }) // password mismatch
+                    res.json({ success: false, val: [401]}); // password mismatch
             }
             else
-                res.json({
-                    success: false,
-                    val: [402]
-                }) // loginname not found
+            res.json({ success: false, val: [402]}); // loginname not found
         })
         .catch((err) => {
             next(err);
@@ -118,32 +113,27 @@ app.post("/login", (req, res, next) => {
         .then((querySnapshot) => {
             if(!querySnapshot.empty)
             {
-                querySnapshot.docs.forEach((docSnapshot) => {
-                    if(bcrypt.compareSync(payload.password, docSnapshot.get("password")))
-                    {
-                        let token = helper.generateAuthToken({
-                            _id: docSnapshot.id
-                        });
-                        res.json({
-                            success: true, val: {
-                                token: token,
-                                _id: docSnapshot.id,
-                                username: docSnapshot.get("username")
-                        }}) // success
-                    }
+                querySnapshot.docs.forEach((docRef) => {
+                    if(bcrypt.compareSync(payload.password, docRef.get("password")))
+                        authenticate(docRef, res); // success
                     else
-                        res.json({ success: false, val: [401] })
+                        res.json({ success: false, val: [401]}); // password mismatch
                 })
             }
             else
-                res.json({
-                    success: false,
-                    val: [402]
-                })
+            res.json({ success: false, val: [402]}); // loginname not found
         })
         .catch((err) => {
             next(err);
         })
     }
+})
+
+app.post("/logout", (req, res) => {
+    unauthenticate(res);
+})
+
+app.post("/checkauthen", helper.checkAuthen, (req, res) => {
+    res.json(req.user);
 })
 module.exports = app;
